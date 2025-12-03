@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useSphere } from '@react-three/cannon';
 import { Html } from '@react-three/drei';
@@ -16,13 +17,12 @@ export const Marble = ({ data, startPosition, onRegister, onUnregister }: Marble
     mass: 1,
     position: startPosition,
     args: [0.5],
-    material: { friction: 0.1, restitution: 0.7 },
-    linearDamping: 0.1,
-    angularDamping: 0.1,
+    material: { friction: 0.05, restitution: 0.5 }, // Lower friction to keep moving on flat, but high damping below
+    linearDamping: 0.3, // INCREASED: Air resistance to slow them down (was 0.1)
+    angularDamping: 0.4, // INCREASED: Prevents crazy spinning (was 0.1)
+    allowSleep: false, // Never let them sleep, race is active
   }));
 
-  // Attach the name to the physics body so the sensor knows who crossed
-  // And register/unregister for camera tracking
   React.useEffect(() => {
      if (ref.current) {
         // @ts-ignore
@@ -39,13 +39,13 @@ export const Marble = ({ data, startPosition, onRegister, onUnregister }: Marble
       <sphereGeometry args={[0.5, 32, 32]} />
       <meshStandardMaterial 
         color={data.color}
-        metalness={0.3}
-        roughness={0.2}
+        metalness={0.4}
+        roughness={0.1}
         emissive={data.color}
-        emissiveIntensity={0.2}
+        emissiveIntensity={0.3}
       />
       <Html position={[0, 0.8, 0]} center distanceFactor={10} zIndexRange={[100, 0]}>
-        <div className="bg-black/70 text-white text-[8px] px-1 py-0.5 rounded backdrop-blur-sm whitespace-nowrap border border-white/20 select-none">
+        <div className="bg-black/70 text-white text-[8px] px-1 py-0.5 rounded backdrop-blur-sm whitespace-nowrap border border-white/20 select-none font-bold">
           {data.username}
         </div>
       </Html>

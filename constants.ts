@@ -1,3 +1,4 @@
+
 export const COLORS = {
   neonBlue: '#00F5FF',
   neonPurple: '#B200FF',
@@ -10,7 +11,7 @@ export const COLORS = {
 
 export const TRACK_CONFIG = {
   startHeight: 20,
-  trackWidth: 8,
+  trackWidth: 12,
   friction: 0.1,
   restitution: 0.5
 };
@@ -18,7 +19,9 @@ export const TRACK_CONFIG = {
 export const PHYSICS_CONFIG = {
   gravity: [0, -9.81, 0] as [number, number, number],
   defaultContactMaterial: {
-    friction: 0.1,
-    restitution: 0.7,
+    friction: 0.02, // Very low global friction to ensure they slide even on low slopes
+    restitution: 0.4, // Moderate bounciness
+    contactEquationStiffness: 1e8,
+    contactEquationRelaxation: 3,
   }
 };
