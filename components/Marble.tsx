@@ -12,7 +12,7 @@ interface MarbleProps {
   onUnregister: (id: string) => void;
 }
 
-export const Marble = ({ data, startPosition, onRegister, onUnregister }: MarbleProps) => {
+export const Marble: React.FC<MarbleProps> = ({ data, startPosition, onRegister, onUnregister }) => {
   const [ref] = useSphere(() => ({
     mass: 1,
     position: startPosition,

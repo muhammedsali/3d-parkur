@@ -85,7 +85,7 @@ const WalledSegment = ({ position, rotation, length }: any) => {
   );
 };
 
-const ObstaclePin = ({ position, rotation }: { position: [number, number, number], rotation: [number, number, number] }) => {
+const ObstaclePin: React.FC<{ position: [number, number, number], rotation: [number, number, number] }> = ({ position, rotation }) => {
    const [ref] = useCylinder(() => ({
     type: 'Static',
     position,

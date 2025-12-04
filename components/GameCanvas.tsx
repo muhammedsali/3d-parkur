@@ -41,8 +41,8 @@ const LeaderTracker = ({
     if (leaderPos) {
       targetRef.current.position.lerp(leaderPos, 0.05); 
     } else {
-        // Default start position view
-        targetRef.current.position.set(0, 215, 0);
+        // Default start position view (Start ramp is at 210)
+        targetRef.current.position.set(0, 210, 10);
     }
   });
 
@@ -76,8 +76,9 @@ export const GameCanvas = ({ participants, gameState, onFinish, cameraMode, trac
     }
   };
 
+  // Initial camera position set high up to match the new track height (210)
   return (
-    <Canvas shadows camera={{ position: [20, 250, -30], fov: 60 }} dpr={[1, 2]}>
+    <Canvas shadows camera={{ position: [50, 260, 50], fov: 60 }} dpr={[1, 2]}>
       <color attach="background" args={['#050505']} />
       
       <ambientLight intensity={0.6} />
@@ -101,6 +102,7 @@ export const GameCanvas = ({ participants, gameState, onFinish, cameraMode, trac
              const row = Math.floor(index / 4);
              
              // Spawn logic adjusted for the fixed Start Ramp at [0, 210, 0]
+             // Z offset to place them ON the ramp (it goes towards +Z)
              const x = (col - 1.5) * 1.5; 
              const z = 5 + (row * 1.5); 
              const y = 220;

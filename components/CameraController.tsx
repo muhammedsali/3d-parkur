@@ -21,35 +21,38 @@ export const CameraController = ({ mode, targetRef }: CameraControllerProps) => 
         // Find position of the target
         const targetPos = targetRef.current.position;
         
-        // Desired camera position: behind (-z) and above (+y) relative to the object
-        // Since track goes towards +Z, "behind" is actually smaller Z if looking forward.
-        // Wait, track is Start [0,15,0] -> Finish [0,-3,85].
-        // Motion is +Z.
-        // So we want camera at Z - offset.
-        
-        // Offset: 12 units back, 10 units up
-        vec.set(targetPos.x * 0.8, targetPos.y + 10, targetPos.z - 15);
+        // Offset: 15 units back, 12 units up to see the track better from above
+        vec.set(targetPos.x * 0.8, targetPos.y + 12, targetPos.z - 20);
         
         // Smoothly move camera
         state.camera.position.lerp(vec, delta * 3);
         
         // Look slightly ahead of the marble
-        const lookAtTarget = new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z + 5);
+        const lookAtTarget = new THREE.Vector3(targetPos.x, targetPos.y - 2, targetPos.z + 10);
         state.camera.lookAt(lookAtTarget);
     } 
     else if (mode === CameraMode.CINEMATIC) {
-        // Slowly rotate around center or pan along track
+        // Slowly rotate around the start of the track (which is at Y=210)
         const t = state.clock.getElapsedTime();
-        state.camera.position.x = Math.sin(t * 0.2) * 30;
-        state.camera.position.z = 40 + Math.cos(t * 0.2) * 10;
-        state.camera.position.y = 20;
-        state.camera.lookAt(0, 0, 50);
+        const startHeight = 210;
+        
+        // Orbit parameters
+        const radius = 70;
+        const centerX = 0;
+        const centerY = startHeight - 20; // Look slightly below start
+        const centerZ = 40; // Look a bit forward into the track
+
+        state.camera.position.x = centerX + Math.sin(t * 0.15) * radius;
+        state.camera.position.z = centerZ + Math.cos(t * 0.15) * radius;
+        state.camera.position.y = startHeight + 40; // Look from above
+        
+        state.camera.lookAt(centerX, centerY, centerZ);
     }
   });
 
   return (
     <>
-      {mode === CameraMode.FREE && <OrbitControls ref={controlsRef} />}
+      {mode === CameraMode.FREE && <OrbitControls ref={controlsRef} target={[0, 200, 50]} />}
     </>
   );
 };
