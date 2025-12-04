@@ -1,8 +1,9 @@
+
 /// <reference lib="dom" />
 import React, { useState, useCallback } from 'react';
 import { GameCanvas } from './components/GameCanvas';
 import { parseInstagramZip, generateMockParticipants } from './services/instagramService';
-import { Participant, GameState, RaceResult, CameraMode } from './types';
+import { Participant, GameState, RaceResult, CameraMode, TrackConfig } from './types';
 import { COLORS } from './constants';
 
 const App = () => {
@@ -11,6 +12,14 @@ const App = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.MENU);
   const [cameraMode, setCameraMode] = useState<CameraMode>(CameraMode.CINEMATIC);
   const [loadingMsg, setLoadingMsg] = useState<string>("");
+
+  // Default Config
+  const [trackConfig, setTrackConfig] = useState<TrackConfig>({
+    segmentCount: 10,
+    steepness: 1.0,
+    chaosLevel: 0.5,
+    banking: 0.2
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -27,12 +36,16 @@ const App = () => {
     }
   };
 
-  const handleStartRace = () => {
+  const handleGoToEditor = () => {
     if (participants.length === 0) {
-      // Auto-generate for demo if no file uploaded
       const mocks = generateMockParticipants(15);
       setParticipants(mocks);
     }
+    setGameState(GameState.EDITOR);
+    setCameraMode(CameraMode.CINEMATIC); // Cinematic view while editing
+  };
+
+  const handleStartRace = () => {
     setResults([]);
     setGameState(GameState.RACE);
     setCameraMode(CameraMode.FOLLOW);
@@ -40,7 +53,6 @@ const App = () => {
 
   const handleFinish = useCallback((data: { id: string, time: number }) => {
     setResults(prev => {
-      // Avoid duplicates
       if (prev.find(r => r.username === participants.find(p => p.id === data.id)?.username)) return prev;
 
       const p = participants.find(part => part.id === data.id);
@@ -60,6 +72,21 @@ const App = () => {
 
   const formatTime = (ms: number) => (ms / 1000).toFixed(2) + 's';
 
+  // --- UI Components for Range Inputs ---
+  const RangeControl = ({ label, value, min, max, step, onChange, unit = "" }: any) => (
+    <div className="mb-4">
+      <div className="flex justify-between text-xs text-cyan-300 mb-1">
+        <span>{label}</span>
+        <span>{value}{unit}</span>
+      </div>
+      <input 
+        type="range" min={min} max={max} step={step} value={value} 
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+      />
+    </div>
+  );
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden font-sans">
       {/* 3D Layer */}
@@ -69,6 +96,7 @@ const App = () => {
           gameState={gameState} 
           onFinish={handleFinish}
           cameraMode={cameraMode}
+          trackConfig={trackConfig}
         />
       </div>
 
@@ -100,7 +128,7 @@ const App = () => {
               
               <div className="mb-8 space-y-2">
                  <h2 className="text-2xl text-white font-bold">Setup Race</h2>
-                 <p className="text-gray-400 text-sm">Upload your Instagram JSON zip to turn followers into marbles.</p>
+                 <p className="text-gray-400 text-sm">Upload JSON to play with followers.</p>
               </div>
 
               <div className="space-y-4">
@@ -117,16 +145,61 @@ const App = () => {
                 {loadingMsg && <p className="text-yellow-400 text-xs animate-pulse">{loadingMsg}</p>}
 
                 <button 
-                  onClick={handleStartRace}
+                  onClick={handleGoToEditor}
                   className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all"
                 >
-                  {participants.length > 0 ? "START RACE 🏁" : "PLAY DEMO (15 BOTS) 🏁"}
+                  {participants.length > 0 ? "TRACK BUILDER 🛠️" : "TRY DEMO BUILDER 🛠️"}
                 </button>
               </div>
-              
-              <p className="mt-6 text-[10px] text-gray-600">
-                Data runs locally in your browser. No data is uploaded to any server.
-              </p>
+            </div>
+          </div>
+        )}
+
+        {/* TRACK EDITOR SCREEN */}
+        {gameState === GameState.EDITOR && (
+          <div className="absolute inset-0 flex items-center justify-end pointer-events-auto">
+            <div className="w-80 h-full bg-black/80 backdrop-blur-lg border-l border-cyan-500/30 p-6 flex flex-col animate-in slide-in-from-right">
+               <h2 className="text-2xl text-white font-bold mb-6 italic border-b border-gray-700 pb-2">TRACK STUDIO</h2>
+               
+               <div className="flex-1 overflow-y-auto">
+                  <div className="space-y-6">
+                    <RangeControl 
+                      label="Track Length" 
+                      value={trackConfig.segmentCount} min={3} max={25} step={1} unit=" Segments"
+                      onChange={(v: number) => setTrackConfig({...trackConfig, segmentCount: v})}
+                    />
+                    <RangeControl 
+                      label="Steepness (Slope)" 
+                      value={trackConfig.steepness} min={0.2} max={1.8} step={0.1} 
+                      onChange={(v: number) => setTrackConfig({...trackConfig, steepness: v})}
+                    />
+                    <RangeControl 
+                      label="Banking (Right Tilt)" 
+                      value={trackConfig.banking} min={0} max={0.5} step={0.05} 
+                      onChange={(v: number) => setTrackConfig({...trackConfig, banking: v})}
+                    />
+                    <RangeControl 
+                      label="Chaos Level (Obstacles)" 
+                      value={trackConfig.chaosLevel} min={0} max={1} step={0.1} unit="%"
+                      onChange={(v: number) => setTrackConfig({...trackConfig, chaosLevel: v})}
+                    />
+                  </div>
+               </div>
+
+               <div className="mt-6 space-y-2">
+                 <button 
+                    onClick={handleStartRace}
+                    className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded shadow-[0_0_20px_rgba(0,255,0,0.3)] text-xl"
+                  >
+                    START RACE 🚀
+                  </button>
+                  <button 
+                    onClick={() => setGameState(GameState.MENU)}
+                    className="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded"
+                  >
+                    Back to Menu
+                  </button>
+               </div>
             </div>
           </div>
         )}
